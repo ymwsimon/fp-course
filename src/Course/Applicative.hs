@@ -270,8 +270,7 @@ lift1 f ka = lift0 f <*> ka
   k a
   -> k b
   -> k b
-(*>) =
-  error "todo: Course.Applicative#(*>)"
+(*>) = lift2 (\_ x -> x)
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -296,8 +295,7 @@ lift1 f ka = lift0 f <*> ka
   k b
   -> k a
   -> k b
-(<*) =
-  error "todo: Course.Applicative#(<*)"
+(<*) = lift2 const
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -319,8 +317,7 @@ sequence ::
   Applicative k =>
   List (k a)
   -> k (List a)
-sequence =
-  error "todo: Course.Applicative#sequence"
+sequence = foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -345,8 +342,8 @@ replicateA ::
   Int
   -> k a
   -> k (List a)
-replicateA =
-  error "todo: Course.Applicative#replicateA"
+replicateA 0 _ = pure Nil
+replicateA n ka = lift2 (:.) ka $ repliacteA (n - 1) ka
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -373,8 +370,8 @@ filtering ::
   (a -> k Bool)
   -> List a
   -> k (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+filtering _ Nil = pure Nil
+--filtering p (a :. as) = if 
 
 -----------------------
 -- SUPPORT LIBRARIES --
