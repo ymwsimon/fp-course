@@ -76,7 +76,7 @@ headOr ::
   a
   -> List a
   -> a
-headOr _ (x :. xs) = x
+headOr _ (x :. _) = x
 headOr a Nil = a
 
 -- | The product of the elements of a list.

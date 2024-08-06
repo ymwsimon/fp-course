@@ -27,7 +27,7 @@ fullOr ::
   a
   -> Optional a
   -> a
-fullOr v (Full a) = a
+fullOr _ (Full a) = a
 fullOr v Empty = v
 
 -- | Map the given function on the possible value.
@@ -41,7 +41,7 @@ mapOptional ::
   (a -> b)
   -> Optional a
   -> Optional b
-mapOptional f Empty = Empty
+mapOptional _ Empty = Empty
 mapOptional f (Full a) = Full (f a)
 
 -- | Bind the given function on the possible value.

@@ -71,8 +71,6 @@ instance Applicative List where
     List (a -> b)
     -> List a
     -> List b
-  (<*>) Nil _ = Nil
-  (<*>) _ Nil = Nil
   (<*>) fs as = flatMap (`map` as) fs
 
 -- | Insert into an Optional.
@@ -343,7 +341,9 @@ replicateA ::
   -> k a
   -> k (List a)
 replicateA 0 _ = pure Nil
-replicateA n ka = lift2 (:.) ka $ repliacteA (n - 1) ka
+replicateA n ka = lift2 (:.) ka $ replicateA (n - 1) ka
+-- or
+-- replicateA n = sequence . replicate n
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -370,9 +370,12 @@ filtering ::
   (a -> k Bool)
   -> List a
   -> k (List a)
-filtering _ Nil = pure Nil
---filtering p (a :. as) = if 
-
+-- not working
+-- filtering _ Nil = pure Nil
+-- filtering p xs = sequence $ flatten $ sequence $ A.fmap (\x -> A.fmap (const x) (p x)) xs
+-- filtering p xs = map (\x -> map (\y -> if y then (x :. Nil) else Nil) (p x)) xs
+-- answer
+filtering p = foldRight (\x -> lift2 (\r -> if r then (x :.) else id) (p x)) (pure Nil)
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------
