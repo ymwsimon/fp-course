@@ -92,7 +92,7 @@ printFile fp c = putStrLn ("============ " ++ fp) >> putStrLn c
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles = foldRight (\x y -> printFile (fst x) (snd x) >> y) (pure ())
+printFiles = foldRight ((>>) . uncurry printFile) (pure ())
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
@@ -106,21 +106,19 @@ getFile fp = readFile fp >>= pure . (fp,)
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles = sequence . map getFile 
+getFiles = sequence . map getFile
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@, @lines@, and @printFiles@.
 run ::
   FilePath
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run fp = readFile fp >>= getFiles . lines >>= printFiles
 
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo: Course.FileIO#main"
+main = getArgs >>= void . sequence . map run
 
 ----
 
