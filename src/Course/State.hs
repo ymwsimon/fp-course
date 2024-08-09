@@ -98,7 +98,7 @@ instance Applicative (State s) where
   pure ::
     a
     -> State s a
-  pure a = State $ \s -> (a, s)
+  pure a = State (a,)
 
   (<*>) ::
     State s (a -> b)
@@ -164,8 +164,12 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat la = let fr a = do
+                              ds <- get
+                              let b = S.member a ds
+                              put $ S.insert a ds
+                              pure b
+                        in eval (findM fr la) S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -177,8 +181,7 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct =
-  error "todo: Course.State#distinct"
+distinct la = eval (filtering (\a -> ) la) S.empty
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
