@@ -47,7 +47,7 @@ instance Monad List where
     (a -> List b)
     -> List a
     -> List b
-  (=<<) f = flatMap f
+  (=<<) = flatMap
 
 -- | Binds a function on an Optional.
 --
@@ -69,7 +69,7 @@ instance Monad ((->) t) where
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  (=<<)  atb ta = \t -> atb (ta t) t
+  atb =<< ta = \t -> atb (ta t) t
 
 -- | Witness that all things with (=<<) and (<$>) also have (<*>).
 --
@@ -156,7 +156,7 @@ infixl 1 >>=
   -> (a -> k b)
   -> a
   -> k c
-(<=<) bkc akb a = (akb a) >>= bkc
+(<=<) bkc akb a = akb a >>= bkc
 
 infixr 1 <=<
 

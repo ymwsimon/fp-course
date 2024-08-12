@@ -13,6 +13,8 @@ import Course.Functor
 import Course.Applicative
 import Course.Monad
 import qualified Data.Set as S
+import qualified Course.Core as S
+import System.Directory.Internal.Prelude (fromIntegral)
 
 -- $setup
 -- >>> import Test.QuickCheck.Function
@@ -181,7 +183,43 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct la = eval (filtering (\a -> S.member a <$> get) la) S.empty
+-- distinct la = eval (filtering (\a -> (\ds -> lift2 (,) (S.notMember a ds) (S.insert a ds)) <$> get) la) S.empty
+distinct la = eval (filtering (State . lift2 (lift2 (,)) S.notMember S.insert) la) S.empty
+
+t :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t = lift2 (lift2 (,)) S.member S.insert
+t2 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t2 = lift2 (,) <$> S.member <*> S.insert
+t3 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t3 = lift2 (,) . S.member <*> S.insert
+t4 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t4 = (\a -> ((,) <$> S.member a <*>)) <*> S.insert
+t5 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t5 aa = (\a -> ((,) <$> S.member a <*>)) aa $ S.insert aa
+t6 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t6 aa = (\a sec -> (,) . S.member a <*> sec) aa $ S.insert aa
+t7 :: Ord a => a -> S.Set a -> (Bool, S.Set a)
+t7 aa = (\a sec ds -> (S.member a ds,) $ sec ds) aa $ S.insert aa
+t8 :: Ord a => a -> State (S.Set a) Bool
+t8 aa = State $ (\a sec ds -> (S.member a ds, sec ds)) aa $ S.insert aa
+t9 :: Ord a => a -> State (S.Set a) Bool
+t9 aa = State $ (\sec ds -> (S.member aa ds, sec ds)) $ S.insert aa
+t10 :: Ord a => a -> State (S.Set a) Bool
+t10 = \a -> State $ \ds -> (S.member a ds, S.insert a ds)
+-- t10 = \aa -> State $ (\sec ds -> (S.member aa ds, sec ds)) $ S.insert aa
+-- distinct =
+  -- listWithState filtering S.notMember 
+-- listWithState :: 
+--   Ord a1 =>
+--   ((a1 -> State (S.Set a1) a2) 
+--   -> t 
+--   -> State (S.Set a3) a)
+--   -> (a1 -> S.Set a1 -> a2) 
+--   -> t 
+--   -> a 
+-- listWithState f m x =
+--   eval (f (State . lift2 (lift2 (,)) m S.insert) x) S.empty
+
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
@@ -207,5 +245,4 @@ distinct la = eval (filtering (\a -> S.member a <$> get) la) S.empty
 isHappy ::
   Integer
   -> Bool
-isHappy =
-  error "todo: Course.State#isHappy"
+isHappy = contains 1 . firstRepeat . produce (fromIntegral . sum . map (join (*) . digitToInt) . show')
