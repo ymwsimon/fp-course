@@ -101,8 +101,7 @@ type State' s a =
 state' ::
   (s -> (a, s))
   -> State' s a
-state' =
-  error "todo: Course.StateT#state'"
+state' = StateT . (ExactlyOne <$>)
 
 -- | Provide an unwrapper for `State'` values.
 --
@@ -112,8 +111,7 @@ runState' ::
   State' s a
   -> s
   -> (a, s)
-runState' =
-  error "todo: Course.StateT#runState'"
+runState' (StateT esa) = runExactlyOne . esa
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
 --
@@ -124,8 +122,7 @@ execT ::
   StateT s k a
   -> s
   -> k s
-execT =
-  error "todo: Course.StateT#execT"
+execT (StateT ska) = (snd <$>) . ska
 
 -- | Run the `State'` seeded with `s` and retrieve the resulting state.
 --
@@ -135,8 +132,7 @@ exec' ::
   State' s a
   -> s
   -> s
-exec' =
-  error "todo: Course.StateT#exec'"
+exec' (StateT esa) = snd . runExactlyOne . esa
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting value.
 --
@@ -147,8 +143,7 @@ evalT ::
   StateT s k a
   -> s
   -> k a
-evalT =
-  error "todo: Course.StateT#evalT"
+evalT (StateT ska) = (fst <$>) . ska
 
 -- | Run the `State'` seeded with `s` and retrieve the resulting value.
 --
@@ -158,8 +153,7 @@ eval' ::
   State' s a
   -> s
   -> a
-eval' =
-  error "todo: Course.StateT#eval'"
+eval' (StateT esa) = fst . runExactlyOne . esa
 
 -- | A `StateT` where the state also distributes into the produced value.
 --
@@ -168,8 +162,7 @@ eval' =
 getT ::
   Applicative k =>
   StateT s k s
-getT =
-  error "todo: Course.StateT#getT"
+getT = StateT $ pure . join (,)
 
 -- | A `StateT` where the resulting state is seeded with the given value.
 --
@@ -182,8 +175,7 @@ putT ::
   Applicative k =>
   s
   -> StateT s k ()
-putT =
-  error "todo: Course.StateT#putT"
+putT = StateT . const . pure . ((),)
 
 -- | Remove all duplicate elements in a `List`.
 --
