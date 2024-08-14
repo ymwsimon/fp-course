@@ -186,7 +186,11 @@ distinct' ::
   Ord a =>
   List a
   -> List a
-distinct' la = join $ evalT (filtering (\a -> StateT $ \s -> pure (S.notMember a s, S.insert a s)) la) S.empty
+distinct' la = join $ evalT
+                        (filtering
+                          (\a -> StateT $ pure . lift2 (,) (S.notMember a) (S.insert a))
+                          la)
+                        S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- However, if you see a value greater than `100` in the list,
@@ -203,8 +207,13 @@ distinctF ::
   (Ord a, Num a) =>
   List a
   -> Optional (List a)
-distinctF =
-  error "todo: Course.StateT#distinctF"
+distinctF la = evalT
+                      (filtering
+                        (\a -> if a > 100
+                                then StateT $ const Empty
+                                else StateT $ Full . lift2 (,) (S.notMember a) (S.insert a))
+                        la)
+                      S.empty
 
 -- | An `OptionalT` is a functor of an `Optional` value.
 data OptionalT k a =
@@ -222,8 +231,7 @@ instance Functor k => Functor (OptionalT k) where
     (a -> b)
     -> OptionalT k a
     -> OptionalT k b
-  (<$>) =
-    error "todo: Course.StateT (<$>)#instance (OptionalT k)"
+  f <$> oka = OptionalT $ (f <$>) <$> runOptionalT oka
 
 -- | Implement the `Applicative` instance for `OptionalT k` given a Monad k.
 --
@@ -253,15 +261,14 @@ instance Monad k => Applicative (OptionalT k) where
   pure ::
     a
     -> OptionalT k a
-  pure =
-    error "todo: Course.StateT pure#instance (OptionalT k)"
+  pure = OptionalT . pure . pure
 
   (<*>) ::
     OptionalT k (a -> b)
     -> OptionalT k a
     -> OptionalT k b
-  (<*>) =
-    error "todo: Course.StateT (<*>)#instance (OptionalT k)"
+  (OptionalT koab) <*> (OptionalT koa) = OptionalT $ lift2 (lift2 ($)) koab koa
+  -- (OptionalT koab) <*> (OptionalT koa) = OptionalT $ koab >>= \oab -> koa >>= \oa -> pure $ oab <*> oa
 
 -- | Implement the `Monad` instance for `OptionalT k` given a Monad k.
 --
