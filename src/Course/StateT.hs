@@ -267,7 +267,7 @@ instance Monad k => Applicative (OptionalT k) where
     OptionalT k (a -> b)
     -> OptionalT k a
     -> OptionalT k b
-  (OptionalT koab) <*> (OptionalT koa) = OptionalT $ lift2 (lift2 ($)) koab koa
+  (OptionalT koab) <*> (OptionalT koa) = OptionalT $ (<*>) <$> koab <*> koa
   -- (OptionalT koab) <*> (OptionalT koa) = OptionalT $ koab >>= \oab -> koa >>= \oa -> pure $ oab <*> oa
 
 -- | Implement the `Monad` instance for `OptionalT k` given a Monad k.
