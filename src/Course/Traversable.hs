@@ -45,8 +45,7 @@ instance Traversable ExactlyOne where
     (a -> k b)
     -> ExactlyOne a
     -> k (ExactlyOne b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance ExactlyOne"
+  traverse f (ExactlyOne a) = ExactlyOne <$> f a
 
 instance Traversable Optional where
   traverse ::
@@ -54,8 +53,8 @@ instance Traversable Optional where
     (a -> k b)
     -> Optional a
     -> k (Optional b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance Optional"
+  traverse _ Empty = pure Empty
+  traverse f (Full a) = Full <$> f a
 
 -- | Sequences a traversable value of structures to a structure of a traversable value.
 --
@@ -71,15 +70,15 @@ sequenceA ::
   (Applicative k, Traversable t) =>
   t (k a)
   -> k (t a)
-sequenceA =
-  error "todo: Course.Traversable#sequenceA"
+sequenceA = traverse id
 
 instance (Traversable f, Traversable g) =>
   Traversable (Compose f g) where
 -- Implement the traverse function for a Traversable instance for Compose
-  traverse =
-    error "todo: Course.Traversable traverse#instance (Compose f g)"
-
+  traverse f (Compose fga) = let a = traverse (traverse f) fga
+                                          in Compose <$> a
+  -- f g k a
+ 
 -- | The `Product` data type contains one value from each of the two type constructors.
 data Product f g a =
   Product (f a) (g a) deriving (Show, Eq)
