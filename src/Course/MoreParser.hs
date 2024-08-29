@@ -291,7 +291,7 @@ sepby1 ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby1 pa ps = list1 pa <* list ps
+sepby1 pa ps = pa .:. list (ps *> pa)
 
 -- | Write a function that produces a list of values coming off the given parser,
 -- separated by the second given parser.
@@ -313,8 +313,7 @@ sepby ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby =
-  error "todo: Course.MoreParser#sepby"
+sepby pa ps = sepby1 pa ps ||| pure Nil
 
 -- | Write a parser that asserts that there is no remaining input.
 --
@@ -325,8 +324,9 @@ sepby =
 -- True
 eof ::
   Parser ()
-eof =
-  error "todo: Course.MoreParser#eof"
+eof = P $ \input -> case input of
+                      Nil -> Result Nil ()
+                      other -> UnexpectedString other
 
 -- | Write a parser that produces a character that satisfies all of the given predicates.
 --
