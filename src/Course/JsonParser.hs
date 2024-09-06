@@ -112,8 +112,13 @@ toSpecialCharacter c =
 -- True
 jsonString ::
   Parser Chars
-jsonString =
-  error "todo: Course.JsonParser#jsonString"
+jsonString = between (is '"') (is '"') $
+              list $ satisfyAll ((/='\\'):.(/='"'):.isAscii:.Nil)
+                      ||| is '\\' *> (hexu ||| hex)
+                          -- ||| toSpecialCharacter <*> character >>= \result -> case result of
+                                                                              -- Empty -> UnexpectedEof
+                                                                              -- _ -> pure $ fromSpecialCharacter result
+
 
 -- | Parse a JSON rational.
 --
