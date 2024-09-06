@@ -14,6 +14,7 @@ import Course.Applicative
 import Course.Monad
 import Course.List
 import Course.Optional
+import Control.Monad.IO.Class (MonadIO(liftIO))
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -113,12 +114,12 @@ toSpecialCharacter c =
 jsonString ::
   Parser Chars
 jsonString = between (is '"') (is '"') $
-              list $ satisfyAll ((/='\\'):.(/='"'):.isAscii:.Nil)
-                      ||| is '\\' *> (hexu ||| hex)
-                          -- ||| toSpecialCharacter <*> character >>= \result -> case result of
-                                                                              -- Empty -> UnexpectedEof
-                                                                              -- _ -> pure $ fromSpecialCharacter result
-
+              list $ satisfyAll ((/='\\') :. (/='"') :. isAscii :. Nil)
+                      ||| is '\\' *> (parseSpecial ||| hex ||| hexu)
+              where parseSpecial = character >>= \c -> let result = toSpecialCharacter c in
+                                                case result of
+                                                    Empty -> constantParser $ UnexpectedChar c
+                                                    Full sc -> pure $ fromSpecialCharacter sc
 
 -- | Parse a JSON rational.
 --
@@ -153,8 +154,9 @@ jsonString = between (is '"') (is '"') $
 -- True
 jsonNumber ::
   Parser Rational
-jsonNumber =
-  error "todo: Course.JsonParser#jsonNumber"
+jsonNumber = P $ \str -> case readFloats str of
+                            Empty -> UnexpectedString str
+                            Full (result, remain) -> Result remain result
 
 -- | Parse a JSON true literal.
 --
@@ -167,8 +169,7 @@ jsonNumber =
 -- True
 jsonTrue ::
   Parser Chars
-jsonTrue =
-  error "todo: Course.JsonParser#jsonTrue"
+jsonTrue = stringTok "true"
 
 -- | Parse a JSON false literal.
 --
@@ -181,8 +182,7 @@ jsonTrue =
 -- True
 jsonFalse ::
   Parser Chars
-jsonFalse =
-  error "todo: Course.JsonParser#jsonFalse"
+jsonFalse = stringTok "false"
 
 -- | Parse a JSON null literal.
 --
@@ -195,8 +195,7 @@ jsonFalse =
 -- True
 jsonNull ::
   Parser Chars
-jsonNull =
-  error "todo: Course.JsonParser#jsonNull"
+jsonNull = stringTok "null"
 
 -- | Parse a JSON array.
 --
@@ -218,8 +217,7 @@ jsonNull =
 -- Result >< [JsonTrue,JsonString "abc",JsonArray [JsonFalse]]
 jsonArray ::
   Parser (List JsonValue)
-jsonArray =
-  error "todo: Course.JsonParser#jsonArray"
+jsonArray = betweenSepbyComma '[' ']' jsonValue
 
 -- | Parse a JSON object.
 --
@@ -238,8 +236,7 @@ jsonArray =
 -- Result >xyz< [("key1",JsonTrue),("key2",JsonFalse)]
 jsonObject ::
   Parser Assoc
-jsonObject =
-  error "todo: Course.JsonParser#jsonObject"
+jsonObject = spaces *> betweenSepbyComma '{' '}' ((,) <$> spaces *> jsonString <*> spaces *> charTok ':' *> spaces *> jsonValue <* spaces) <* spaces
 
 -- | Parse a JSON value.
 --
@@ -255,8 +252,14 @@ jsonObject =
 -- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
 jsonValue ::
   Parser JsonValue
-jsonValue =
-   error "todo: Course.JsonParser#jsonValue"
+jsonValue = spaces *> (JsonNull <$ jsonNull
+            ||| JsonTrue <$ jsonTrue
+            ||| JsonFalse <$ jsonFalse
+            ||| JsonArray <$> jsonArray
+            ||| JsonString <$> jsonString
+            ||| JsonRational <$> jsonNumber
+            ||| JsonObject <$> jsonObject
+            ) <* spaces
 
 -- | Read a file into a JSON value.
 --
@@ -264,5 +267,4 @@ jsonValue =
 readJsonValue ::
   FilePath
   -> IO (ParseResult JsonValue)
-readJsonValue =
-  error "todo: Course.JsonParser#readJsonValue"
+readJsonValue = (parse jsonValue <$>) . readFile
