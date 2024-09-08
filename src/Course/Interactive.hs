@@ -82,8 +82,7 @@ data Op =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 convertInteractive ::
   IO ()
-convertInteractive =
-  error "todo: Course.Interactive#convertInteractive"
+convertInteractive = vooid $ getLine >>= putStrLn . (toUpper <$>)
 
 -- |
 --
@@ -110,8 +109,10 @@ convertInteractive =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 reverseInteractive ::
   IO ()
-reverseInteractive =
-  error "todo: Course.Interactive#reverseInteractive"
+reverseInteractive = getLine >>=
+                      readFile >>=
+                        \content -> getLine >>=
+                          \newFileName -> writeFile newFileName $ reverse content
 
 -- |
 --
@@ -136,8 +137,10 @@ reverseInteractive =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 encodeInteractive ::
   IO ()
-encodeInteractive =
-  error "todo: Course.Interactive#encodeInteractive"
+encodeInteractive = getLine >>= putStrLn . join . map convert
+                      where convert c = case find ((== c).fst) ((' ', "%20") :. ('\t', "%09") :. ('"', "%22") :. Nil) of
+                                          Full s -> snd s
+                                          Empty -> c :. Nil
 
 interactive ::
   IO ()
