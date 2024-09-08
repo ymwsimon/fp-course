@@ -16,8 +16,7 @@ fastAnagrams ::
   Chars
   -> FilePath
   -> IO (List Chars)
-fastAnagrams =
-  error "todo: Course.FastAnagrams#fastAnagrams"
+fastAnagrams str fp = listh . S.toList . S.intersection (S.fromList (hlist $ permutations $ map toLower str)) . S.fromList . hlist . lines . map toLower <$> readFile fp
 
 newtype NoCaseString =
   NoCaseString
